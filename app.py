@@ -1,8 +1,9 @@
 from flask import Flask, request, jsonify
+from flask_cors import CORS  # Import CORS
 
 app = Flask(__name__)
+CORS(app, resources={r"/*": {"origins": "*"}})  # Allow all origins
 
-# Store servo positions in memory (or use a database)
 servo_positions = {
     "base": 90,
     "shoulder": 90,
@@ -12,21 +13,14 @@ servo_positions = {
     "gripper": 90
 }
 
-@app.route("/")
-def home():
-    return "Robotic Arm Backend is Running!"
-
 @app.route("/update_servo", methods=["POST"])
 def update_servo():
     data = request.json
-    servo = data.get("servo")
-    value = data.get("value")
+    for key, value in data.items():
+        if key in servo_positions:
+            servo_positions[key] = int(value)  # Update servo position
 
-    if servo in servo_positions:
-        servo_positions[servo] = int(value)
-        return jsonify({"status": "success", "servo": servo, "value": value})
-
-    return jsonify({"status": "error", "message": "Invalid servo"}), 400
+    return jsonify({"message": "Servo updated", "positions": servo_positions})
 
 @app.route("/get_servo_positions", methods=["GET"])
 def get_servo_positions():
